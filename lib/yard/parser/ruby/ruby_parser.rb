@@ -382,14 +382,24 @@ module YARD
         def insert_comments
           root.traverse do |node|
             next if node.type == :list || node.parent.type != :list
+
+            docstring_comments = []
+            docstring_begin = nil
+            docstring_end = nil
+
             (node.line - 2).upto(node.line) do |line|
               comment = @comments[line]
               if comment && !comment.empty?
-                node.docstring = comment
-                node.docstring_range = ((line - comment.count("\n"))..line)
+                docstring_comments << comment
+                docstring_begin ||= (line - comment.count("\n"))
+                docstring_end = line
                 comments.delete(line)
-                break
               end
+            end
+
+            unless docstring_comments.empty?
+              node.docstring = docstring_comments.join("\n")
+              node.docstring_range = docstring_begin..docstring_end
             end
           end
         end
